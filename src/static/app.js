@@ -35,12 +35,48 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         `;
 
-        // Populate participants list (bulleted)
+        // Populate participants list (no bullets) with delete buttons
         const ul = activityCard.querySelector(".participants-list");
         if (Array.isArray(details.participants) && details.participants.length > 0) {
           details.participants.forEach((p) => {
             const li = document.createElement("li");
-            li.textContent = p;
+            li.className = "participant-item";
+
+            const span = document.createElement("span");
+            span.className = "participant-email";
+            span.textContent = p;
+
+            const btn = document.createElement("button");
+            btn.className = "btn-unregister";
+            btn.title = `Unregister ${p}`;
+            // Use a simple ✖ character for the delete icon
+            btn.innerHTML = '✖';
+
+            // Click handler to call unregister endpoint
+            btn.addEventListener("click", async () => {
+              if (!confirm(`Remove ${p} from ${name}?`)) return;
+
+              try {
+                const resp = await fetch(
+                  `/activities/${encodeURIComponent(name)}/unregister?email=${encodeURIComponent(p)}`,
+                  { method: "POST" }
+                );
+
+                const result = await resp.json();
+                if (resp.ok) {
+                  // Refresh activities list
+                  fetchActivities();
+                } else {
+                  alert(result.detail || result.message || "Failed to unregister");
+                }
+              } catch (err) {
+                console.error("Error unregistering:", err);
+                alert("Failed to unregister. See console for details.");
+              }
+            });
+
+            li.appendChild(span);
+            li.appendChild(btn);
             ul.appendChild(li);
           });
         } else {
